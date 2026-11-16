@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="在实时三维场景中自由观察永恒号与卡冈图雅的吸积盘。">
+  <title>永恒号与卡冈图雅</title>
+  <link rel="icon" href="assets/orbit.png" type="image/png">
+  <link rel="stylesheet" href="viewer.css">
+  <script defer src="assets/scene-data.js"></script>
+  <script defer src="renderer.js"></script>
+  <script defer src="viewer.js"></script>
+</head>
+<body>
+  <main class="observatory">
+    <header class="masthead">
+      <div class="identity">
+        <div class="orbit-mark" aria-hidden="true"><i></i></div>
+        <div>
+          <h1>永恒号与卡冈图雅</h1>
+          <p>《星际穿越》实时三维场景</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="action" id="motion" aria-pressed="false" disabled>
+          <span class="motion-icon" aria-hidden="true"></span><span id="motion-text">暂停动画</span>
+        </button>
+        <button type="button" class="action" id="reset" disabled>
+          <span class="symbol" aria-hidden="true">↺</span><span>重置视角</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="stage" id="stage" aria-label="三维场景">
+      <canvas id="scene" tabindex="0" aria-label="三维视窗" aria-describedby="camera-help">
+        浏览器需要支持 WebGL 2 才能渲染三维视窗。
+      </canvas>
+      <img class="poster" src="assets/poster.webp" alt="永恒号飞过金色吸积盘的渲染画面">
+      <div class="stage-shade" aria-hidden="true"></div>
+      <div class="stage-top">
+        <div class="live-label"><span class="signal" aria-hidden="true"></span><span id="stage-status" role="status">加载场景</span></div>
+        <button type="button" class="action fullscreen" id="fullscreen" title="全屏" aria-label="全屏">
+          <span class="fullscreen-icon" aria-hidden="true"></span>
+        </button>
+      </div>
+      <p class="fallback" id="fallback" role="status" hidden></p>
+      <div class="stage-bottom">
+        <p class="camera-help" id="camera-help">
+          <span class="desktop-help">拖动旋转 <b aria-hidden="true">·</b> 滚轮缩放 <b aria-hidden="true">·</b> Shift + 拖动平移</span>
+          <span class="touch-help">单指旋转 <b aria-hidden="true">·</b> 双指缩放和平移</span>
+        </p>
+        <div class="zoom" role="group" aria-label="缩放控制">
+          <button type="button" id="zoom-out" aria-label="缩小" title="缩小" disabled>−</button>
+          <output id="zoom-value" aria-label="缩放倍率">1.0×</output>
+          <button type="button" id="zoom-in" aria-label="放大" title="放大" disabled>+</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="console">
+      <div class="views" role="group" aria-label="观察目标">
+        <button type="button" class="view" data-mode="flyby" aria-pressed="true" disabled>
+          <img src="assets/flyby.webp" alt="">
+          <span><strong>伴飞</strong><small>飞船与黑洞</small></span>
+        </button>
+        <button type="button" class="view" data-mode="ship" aria-pressed="false" disabled>
+          <img src="assets/ship.webp" alt="">
+          <span><strong>永恒号</strong><small>环形母船</small></span>
+        </button>
+        <button type="button" class="view" data-mode="hole" aria-pressed="false" disabled>
+          <img src="assets/hole.webp" alt="">
+          <span><strong>卡冈图雅</strong><small>黑洞与吸积盘</small></span>
+        </button>
+      </div>
+      <div class="quality-control">
+        <label for="quality">渲染画质</label>
+        <select id="quality" disabled>
+          <option value="auto">自动</option>
+          <option value="high">清晰</option>
+          <option value="low">流畅</option>
+        </select>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>
