@@ -12,12 +12,18 @@
       pauseAll: '全部暂停',
       resetAll: '全部归零',
       videoTip: '提示：每个视频均可独立点击播放；“同时播放”不强制跳帧，保证双路流畅不卡顿',
+      launchAllHtml: '同时启动全部网页',
+      sleepAllHtml: '全部休眠释放显卡',
+      htmlTip: '提示：交互场景均为实时 WebGL2 渲染，可单开满帧体验，或点击「同时启动」并排操作',
+      launchOneHtml: '▶ 启动实时交互网页',
+      launchOneSub: '点击加载 WebGL2 场景 · 支持鼠标拖拽旋转与缩放',
+      sleepOneHtml: '⏹ 休眠',
       soloAudio: '仅听此路',
       reloadHtml: '↻ 重载',
-      openNewTab: '↗ 新窗打开',
+      openNewTab: '↗ 新窗全屏',
       svgBgToggle: '切换底色',
       specsTitle: '核心参数与成本对照',
-      footerNote: '支持视频（MP4/WebM）、交互网页（HTML）与矢量图形（SVG）多模态同台对比',
+      footerNote: '支持视频（MP4/WebM）、交互网页（HTML）与矢量图形（SVG）多模态分类同台对比',
       modalTitle: '添加本地作品进行同台对比',
       modalTip: '支持选择本地 MP4 / WebM 视频、HTML 网页或 SVG 矢量文件，仅在当前浏览器内存中临时加载对比，不会上传服务器；也可导出 JSON 片段写入 models.json 永久发布。',
       dropTitle: '点击选择或拖拽文件到此处',
@@ -35,7 +41,13 @@
       metricTimeLabel: '耗时',
       metricTokenLabel: 'Token',
       metricCostLabel: '花费',
-      modelsUnit: '个模型',
+      worksUnit: '作品',
+      catNames: {
+        video: '🎬 视频成片对比',
+        html: '🌐 交互式 3D 网页对比',
+        svg: '✦ SVG 矢量图形对比',
+        all: '📋 全部形式'
+      },
       typeLabels: {
         video: '视频',
         html: 'HTML 网页',
@@ -58,16 +70,22 @@
       sharedPromptBadge: 'SHARED PROMPT',
       copyPrompt: 'Copy Prompt',
       copied: 'Copied ✓',
-      playAll: 'Play All Together',
+      playAll: 'Play All Videos',
       pauseAll: 'Pause All',
       resetAll: 'Reset All',
-      videoTip: 'Tip: Play each video independently anytime; "Play All" avoids mid-playback hard-seeks to prevent stutter',
+      videoTip: 'Tip: Play each video independently; "Play All" avoids forced mid-stream seeks for stutter-free decoding',
+      launchAllHtml: 'Launch All Web Scenes',
+      sleepAllHtml: 'Unload All (Free GPU)',
+      htmlTip: 'Tip: Interactive scenes run heavy real-time WebGL2 shaders; launch one at a time for peak FPS or both together',
+      launchOneHtml: '▶ Launch Interactive 3D Scene',
+      launchOneSub: 'Click to boot WebGL2 · Drag to orbit, scroll to zoom',
+      sleepOneHtml: '⏹ Sleep',
       soloAudio: 'Solo Audio',
       reloadHtml: '↻ Reload',
-      openNewTab: '↗ Open Tab',
+      openNewTab: '↗ Full Tab',
       svgBgToggle: 'Background',
       specsTitle: 'Specs & Cost Comparison',
-      footerNote: 'Supports Video (MP4/WebM), Interactive HTML, and Vector SVG side-by-side comparison',
+      footerNote: 'Categorized comparison for Video (MP4/WebM), Interactive HTML, and Vector SVG outputs',
       modalTitle: 'Add Local Output to Comparison Grid',
       modalTip: 'Load any local MP4 / WebM video, HTML page, or SVG file locally inside your browser (never uploaded). Export a models.json snippet to deploy permanently.',
       dropTitle: 'Click to browse or drop file here',
@@ -85,7 +103,13 @@
       metricTimeLabel: 'Time',
       metricTokenLabel: 'Tokens',
       metricCostLabel: 'Cost',
-      modelsUnit: 'models',
+      worksUnit: 'items',
+      catNames: {
+        video: '🎬 Video Cuts',
+        html: '🌐 Interactive WebGL Pages',
+        svg: '✦ Vector SVG',
+        all: '📋 All Formats'
+      },
       typeLabels: {
         video: 'Video',
         html: 'HTML Page',
@@ -108,9 +132,11 @@
     lang: 'zh',
     benchmarks: [],
     activeBenchmarkId: null,
+    activeCategory: 'video',
     arena: null,
     models: [],
     soloVideoId: null,
+    activeHtmlIds: new Set(),
     selectedFile: null,
     selectedType: 'video',
     selectedMeta: null
@@ -139,6 +165,27 @@
     return m.url || m.video || m.src || '';
   }
 
+  function getAvailableCategories(models) {
+    const order = ['video', 'html', 'svg'];
+    const counts = {};
+    models.forEach((m) => {
+      const t = inferModelType(m);
+      counts[t] = (counts[t] || 0) + 1;
+    });
+    const cats = order.filter((t) => counts[t] > 0).map((t) => ({ key: t, count: counts[t] }));
+    if (cats.length > 1) {
+      cats.push({ key: 'all', count: models.length });
+    }
+    return cats;
+  }
+
+  function getVisibleModels() {
+    if (!state.activeCategory || state.activeCategory === 'all') {
+      return state.models;
+    }
+    return state.models.filter((m) => inferModelType(m) === state.activeCategory);
+  }
+
   function getVideoEls() {
     return Array.from(document.querySelectorAll('#comparisonGrid video'));
   }
@@ -148,11 +195,7 @@
     const vids = getVideoEls();
 
     vids.forEach((v) => {
-      if (state.soloVideoId) {
-        v.muted = v.dataset.modelId !== state.soloVideoId;
-      } else {
-        v.muted = false;
-      }
+      v.muted = state.soloVideoId ? v.dataset.modelId !== state.soloVideoId : false;
     });
 
     document.querySelectorAll('.solo-btn').forEach((btn) => {
@@ -181,17 +224,13 @@
     const vids = getVideoEls();
     if (!vids.length) return;
 
-    // Reset finished videos to start before simultaneous playback
     vids.forEach((v) => {
       if (Number.isFinite(v.duration) && v.currentTime >= v.duration - 0.1) {
         v.currentTime = 0;
       }
     });
 
-    // Ensure enough future data is buffered before simultaneous start (avoids startup stutter)
     await Promise.all(vids.map((v) => waitCanPlay(v, 1200)));
-
-    // Notice: no hard-seek RAF loop during playback! Native hardware decode runs smoothly.
     await Promise.allSettled(vids.map((v) => v.play()));
   }
 
@@ -204,6 +243,18 @@
       v.pause();
       v.currentTime = 0;
     });
+  }
+
+  function launchAllHtml() {
+    getVisibleModels()
+      .filter((m) => inferModelType(m) === 'html')
+      .forEach((m) => state.activeHtmlIds.add(m.id));
+    renderCards();
+  }
+
+  function sleepAllHtml() {
+    state.activeHtmlIds.clear();
+    renderCards();
   }
 
   function renderTelemetryHtml(model) {
@@ -232,31 +283,105 @@
       btn.type = 'button';
       btn.className = 'bench-tab' + (b.id === state.activeBenchmarkId ? ' active' : '');
       const title = state.lang === 'zh' ? b.tabTitle || b.title : b.tabTitleEn || b.title;
-      const badgeHtml = b.badge ? `<span class="bench-badge">${escapeHtml(b.badge)}</span>` : '';
-      const countText = `${(b.models || []).length} ${dict.modelsUnit}`;
+      const badgeText = state.lang === 'zh' ? b.badge : b.badgeEn || b.badge;
+      const badgeHtml = badgeText ? `<span class="bench-badge">${escapeHtml(badgeText)}</span>` : '';
+      const countText = `${(b.models || []).length} ${dict.worksUnit}`;
       btn.innerHTML = `${badgeHtml}<span>${escapeHtml(title)}</span><span class="bench-count">(${escapeHtml(countText)})</span>`;
-      btn.addEventListener('click', () => switchBenchmark(b.id, true));
+      btn.addEventListener('click', () => switchBenchmark(b.id, null, true));
       nav.appendChild(btn);
     });
+  }
+
+  function renderCategoryBar() {
+    const bar = $('categoryBar');
+    const cats = getAvailableCategories(state.models);
+    if (cats.length <= 1) {
+      bar.hidden = true;
+      bar.innerHTML = '';
+      return;
+    }
+
+    const dict = I18N[state.lang];
+    const newCats = new Set((state.arena && state.arena.newCategories) || []);
+    bar.hidden = false;
+    bar.innerHTML = '';
+
+    cats.forEach((cat) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cat-pill' + (cat.key === state.activeCategory ? ' active' : '');
+      const label = dict.catNames[cat.key] || cat.key;
+      const tagHtml = newCats.has(cat.key) ? `<span class="cat-tag">NEW</span>` : '';
+      btn.innerHTML = `${tagHtml}<span>${escapeHtml(label)}</span><span>(${cat.count})</span>`;
+      btn.addEventListener('click', () => switchCategory(cat.key, true));
+      bar.appendChild(btn);
+    });
+  }
+
+  function updatePromptNote() {
+    const noteEl = $('promptFairnessNote');
+    if (!state.arena) {
+      noteEl.hidden = true;
+      return;
+    }
+    const notesMap = state.lang === 'zh' ? state.arena.categoryNotes : state.arena.categoryNotesEn || state.arena.categoryNotes;
+    const catKey = state.activeCategory;
+    let noteText = '';
+    if (notesMap && catKey !== 'all' && notesMap[catKey]) {
+      noteText = notesMap[catKey];
+    } else if (notesMap && catKey === 'all') {
+      noteText = Object.values(notesMap).join(' | ');
+    } else {
+      noteText = state.lang === 'zh' ? state.arena.fairnessNote : state.arena.fairnessNoteEn || state.arena.fairnessNote;
+    }
+    if (noteText) {
+      noteEl.textContent = noteText;
+      noteEl.hidden = false;
+    } else {
+      noteEl.hidden = true;
+    }
+  }
+
+  function switchCategory(catKey, updateHash = true) {
+    pauseAllVideos();
+    state.activeCategory = catKey;
+    state.soloVideoId = null;
+
+    if (updateHash && state.activeBenchmarkId) {
+      const targetHash = `#${state.activeBenchmarkId}/${catKey}`;
+      if (window.location.hash !== targetHash) {
+        history.replaceState(null, '', targetHash);
+      }
+    }
+
+    renderCategoryBar();
+    updatePromptNote();
+    renderCards();
+    renderSpecTable();
   }
 
   function renderCards() {
     const grid = $('comparisonGrid');
     const dict = I18N[state.lang];
+    const visibleModels = getVisibleModels();
     grid.innerHTML = '';
 
     let videoCount = 0;
+    let htmlCount = 0;
 
-    state.models.forEach((m, idx) => {
+    visibleModels.forEach((m, idx) => {
       const type = inferModelType(m);
       const src = getMediaUrl(m);
       const sp = m.specs || {};
       if (type === 'video') videoCount++;
+      if (type === 'html') htmlCount++;
+
+      const isHtmlLive = type === 'html' && state.activeHtmlIds.has(m.id);
 
       const card = document.createElement('article');
       card.className = 'model-card';
 
-      const color = m.accent || (idx === 0 ? '#FF3B1D' : '#2855FF');
+      const color = m.accent || (idx % 2 === 0 ? '#FF3B1D' : '#2855FF');
       const typeLabel = dict.typeLabels[type] || type.toUpperCase();
       const summary =
         state.lang === 'zh'
@@ -272,18 +397,36 @@
       if (type === 'video') {
         toolsHtml += `<button type="button" class="btn-mini solo-btn" data-model-id="${escapeHtml(m.id)}">🔈 ${escapeHtml(dict.soloAudio)}</button>`;
       } else if (type === 'html') {
-        toolsHtml += `<button type="button" class="btn-mini reload-html-btn" data-idx="${idx}">${escapeHtml(dict.reloadHtml)}</button>`;
+        if (isHtmlLive) {
+          toolsHtml += `<button type="button" class="btn-mini sleep-html-btn" data-model-id="${escapeHtml(m.id)}">${escapeHtml(dict.sleepOneHtml)}</button>`;
+          toolsHtml += `<button type="button" class="btn-mini reload-html-btn" data-idx="${idx}">${escapeHtml(dict.reloadHtml)}</button>`;
+        }
         toolsHtml += `<a class="btn-mini" href="${escapeHtml(src)}" target="_blank" rel="noopener noreferrer">${escapeHtml(dict.openNewTab)}</a>`;
       } else if (type === 'svg') {
         toolsHtml += `<button type="button" class="btn-mini svg-bg-btn">${escapeHtml(dict.svgBgToggle)}</button>`;
         toolsHtml += `<a class="btn-mini" href="${escapeHtml(src)}" target="_blank" rel="noopener noreferrer">${escapeHtml(dict.openNewTab)}</a>`;
       }
 
+      let stageClass = 'media-stage';
       let stageHtml = '';
       if (type === 'video') {
         stageHtml = `<video controls playsinline preload="metadata" poster="${escapeHtml(m.poster || '')}" data-model-id="${escapeHtml(m.id)}" src="${escapeHtml(src)}"></video>`;
       } else if (type === 'html') {
-        stageHtml = `<iframe data-html-idx="${idx}" src="${escapeHtml(src)}" sandbox="allow-scripts allow-same-origin" loading="lazy" title="${escapeHtml(m.name)}"></iframe>`;
+        stageClass += ' is-html';
+        if (isHtmlLive) {
+          stageHtml = `<iframe data-html-idx="${idx}" src="${escapeHtml(src)}" allow="fullscreen" loading="eager" title="${escapeHtml(m.name)}"></iframe>`;
+        } else {
+          const posterTag = m.poster ? `<img src="${escapeHtml(m.poster)}" alt="${escapeHtml(m.name)}">` : '';
+          stageHtml = `
+            <div class="html-cover">
+              ${posterTag}
+              <div class="html-launch-overlay">
+                <button type="button" class="html-launch-btn" data-model-id="${escapeHtml(m.id)}">${escapeHtml(dict.launchOneHtml)}</button>
+                <span class="html-launch-sub">${escapeHtml(dict.launchOneSub)}</span>
+              </div>
+            </div>
+          `;
+        }
       } else if (type === 'svg') {
         stageHtml = `<div class="svg-stage" data-bg="dark"><img src="${escapeHtml(src)}" alt="${escapeHtml(m.name)}" /></div>`;
       }
@@ -297,7 +440,7 @@
           </div>
           <div class="card-tools">${toolsHtml}</div>
         </div>
-        <div class="media-stage">${stageHtml}</div>
+        <div class="${stageClass}">${stageHtml}</div>
         <div class="card-foot">
           <div class="foot-top">
             <span class="work-title">${escapeHtml(m.title || m.name)}</span>
@@ -311,12 +454,25 @@
       grid.appendChild(card);
     });
 
-    // Show Play-All toolbar only when 2+ video models exist
     $('videoToolbar').hidden = videoCount < 2;
+    $('htmlToolbar').hidden = htmlCount < 1;
 
-    // Bind per-card interactive buttons
     grid.querySelectorAll('.solo-btn').forEach((btn) => {
       btn.addEventListener('click', () => applySoloAudio(btn.dataset.modelId));
+    });
+
+    grid.querySelectorAll('.html-launch-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.activeHtmlIds.add(btn.dataset.modelId);
+        renderCards();
+      });
+    });
+
+    grid.querySelectorAll('.sleep-html-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.activeHtmlIds.delete(btn.dataset.modelId);
+        renderCards();
+      });
     });
 
     grid.querySelectorAll('.reload-html-btn').forEach((btn) => {
@@ -339,17 +495,18 @@
       });
     });
 
-    // Apply existing solo state if any
     state.soloVideoId = null;
   }
 
   function renderSpecTable() {
     const table = $('specTable');
     const dict = I18N[state.lang];
-    const headCells = state.models
+    const visibleModels = getVisibleModels();
+
+    const headCells = visibleModels
       .map(
         (m, idx) => `<th>
-          <span class="dot" style="display:inline-block;margin-right:6px;background:${m.accent || (idx === 0 ? '#FF3B1D' : '#2855FF')}"></span>
+          <span class="dot" style="display:inline-block;margin-right:6px;background:${m.accent || (idx % 2 === 0 ? '#FF3B1D' : '#2855FF')}"></span>
           ${escapeHtml(m.name)}
         </th>`
       )
@@ -357,7 +514,7 @@
 
     const rowsHtml = dict.specRows
       .map(([label, key]) => {
-        const tds = state.models
+        const tds = visibleModels
           .map((m) => {
             const sp = m.specs || {};
             let val = '—';
@@ -409,27 +566,18 @@
       } else {
         refEl.hidden = true;
       }
-
-      const noteEl = $('promptFairnessNote');
-      const noteText =
-        state.lang === 'zh'
-          ? state.arena.fairnessNote
-          : state.arena.fairnessNoteEn || state.arena.fairnessNote;
-      if (noteText) {
-        noteEl.textContent = noteText;
-        noteEl.hidden = false;
-      } else {
-        noteEl.hidden = true;
-      }
     }
 
     renderBenchmarkTabs();
+    renderCategoryBar();
+    updatePromptNote();
     renderCards();
     renderSpecTable();
   }
 
-  function switchBenchmark(id, updateHash = true) {
+  function switchBenchmark(id, requestedCategory = null, updateHash = true) {
     pauseAllVideos();
+    state.activeHtmlIds.clear();
     const bench = state.benchmarks.find((b) => b.id === id) || state.benchmarks[0];
     if (!bench) return;
 
@@ -438,8 +586,21 @@
     state.models = Array.isArray(bench.models) ? [...bench.models] : [];
     state.soloVideoId = null;
 
-    if (updateHash && window.location.hash !== `#${bench.id}`) {
-      history.replaceState(null, '', `#${bench.id}`);
+    const cats = getAvailableCategories(state.models);
+    const validKeys = new Set(cats.map((c) => c.key));
+    if (requestedCategory && validKeys.has(requestedCategory)) {
+      state.activeCategory = requestedCategory;
+    } else if (bench.defaultCategory && validKeys.has(bench.defaultCategory)) {
+      state.activeCategory = bench.defaultCategory;
+    } else {
+      state.activeCategory = cats.length ? cats[0].key : 'all';
+    }
+
+    if (updateHash) {
+      const targetHash = cats.length > 1 ? `#${bench.id}/${state.activeCategory}` : `#${bench.id}`;
+      if (window.location.hash !== targetHash) {
+        history.replaceState(null, '', targetHash);
+      }
     }
 
     applyI18n();
@@ -468,7 +629,7 @@
       accent: '#C8FF2E',
       title: ($('inputWorkTitle').value || fileName).trim(),
       tagline: ($('inputRenderEngine').value || `${type.toUpperCase()} preview`).trim(),
-      video: `${folder}/${fileName}`,
+      [type === 'video' ? 'video' : 'url']: `${folder}/${fileName}`,
       metrics: {
         timeShort: ($('inputGenTime').value || '—').trim(),
         tokensShort: ($('inputTokens').value || '—').trim(),
@@ -491,6 +652,8 @@
     $('playAllBtn').addEventListener('click', playAllVideos);
     $('pauseAllBtn').addEventListener('click', pauseAllVideos);
     $('resetAllBtn').addEventListener('click', resetAllVideos);
+    $('launchAllHtmlBtn').addEventListener('click', launchAllHtml);
+    $('sleepAllHtmlBtn').addEventListener('click', sleepAllHtml);
 
     $('copyPromptBtn').addEventListener('click', async () => {
       try {
@@ -592,10 +755,17 @@
 
       const entry = buildJsonEntryFromForm();
       entry.id = `${entry.id}-${Date.now().toString(36)}`;
-      entry.video = URL.createObjectURL(state.selectedFile);
+      const blobUrl = URL.createObjectURL(state.selectedFile);
+      if (entry.type === 'video') entry.video = blobUrl;
+      else entry.url = blobUrl;
+      if (entry.type === 'html') state.activeHtmlIds.add(entry.id);
+
       state.models.push(entry);
+      state.activeCategory = entry.type;
 
       renderBenchmarkTabs();
+      renderCategoryBar();
+      updatePromptNote();
       renderCards();
       renderSpecTable();
 
@@ -607,9 +777,10 @@
     });
 
     window.addEventListener('hashchange', () => {
-      const target = window.location.hash.replace(/^#/, '');
-      if (target && target !== state.activeBenchmarkId && state.benchmarks.some((b) => b.id === target)) {
-        switchBenchmark(target, false);
+      const raw = window.location.hash.replace(/^#/, '');
+      const [benchId, catId] = raw.split('/');
+      if (benchId && state.benchmarks.some((b) => b.id === benchId)) {
+        switchBenchmark(benchId, catId || null, false);
       }
     });
   }
@@ -632,14 +803,15 @@
         ];
       }
 
-      const hashId = window.location.hash.replace(/^#/, '');
+      const rawHash = window.location.hash.replace(/^#/, '');
+      const [hashBench, hashCat] = rawHash.split('/');
       const initialId =
-        (hashId && state.benchmarks.some((b) => b.id === hashId) && hashId) ||
+        (hashBench && state.benchmarks.some((b) => b.id === hashBench) && hashBench) ||
         data.defaultBenchmarkId ||
         state.benchmarks[0].id;
 
       bindEvents();
-      switchBenchmark(initialId, false);
+      switchBenchmark(initialId, hashCat || null, false);
     } catch (err) {
       document.body.innerHTML = `<div style="padding:40px;font-family:sans-serif;color:#f3efe6">Failed to load models.json: ${escapeHtml(err.message)}</div>`;
     }

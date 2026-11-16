@@ -5,23 +5,30 @@
       "id": "gargantua-flyby",
       "tabTitle": "02 · 星际穿越 · 黑洞掠过",
       "tabTitleEn": "02 · Interstellar · Gargantua",
-      "badge": "NEW",
+      "badge": "视频+网页",
+      "badgeEn": "Video+Web",
       "title": "Interstellar · Gargantua Endurance Flyby",
       "prompt": "复刻星际穿越中环形母船在黑洞边缘飞行的特效场面",
       "promptEn": "Recreate the VFX shot from Interstellar showing the ring mothership flying past the edge of a black hole (Gargantua).",
-      "benchmarkSpecs": "双片长对比 · 38.00s (1920×1080 60fps) vs 18.00s (2560×1080 24fps) · 立体声配乐",
-      "benchmarkSpecsEn": "Asymmetric cut · 38.00s (1920×1080 60fps) vs 18.00s (2560×1080 24fps) · Stereo Audio",
-      "fairnessNote": "⚠ 耗时说明：Gemini 4 Hydrogen 首轮先生成了交互式 HTML 页面（10分35秒），经用户二次纠正后才渲染交付视频（7分55秒，两轮累计 18分30秒）；而 ChatGPT 6.2 Sol Max (Codex) 单轮直接输出视频（20分18秒）。因此本次双方的生成耗时与 Token 数据没有直接对照参考性。",
-      "fairnessNoteEn": "⚠ Timing Disclaimer: Gemini 4 Hydrogen first built an interactive HTML scene (10m 35s) and only rendered the MP4 video after a second user prompt (7m 55s; 18m 30s combined), whereas ChatGPT 6.2 Sol Max (Codex) produced the video in one run (20m 18s). Generation time and token comparisons for this round are not directly comparable.",
-      "defaultDuration": 38.0,
-      "fps": 60,
+      "benchmarkSpecs": "双交付形态 · 视频 (38s vs 18s) + 实时 WebGL2 交互网页",
+      "benchmarkSpecsEn": "Dual formats · Videos (38s vs 18s) + Interactive WebGL2 Pages",
+      "defaultCategory": "html",
+      "newCategories": ["html"],
+      "categoryNotes": {
+        "video": "⚠ 耗时说明：Gemini 4 Hydrogen 首轮先生成了交互式 HTML 页面（10分35秒），经用户二次纠正后才渲染交付视频（7分55秒，两轮累计 18分30秒）；而 ChatGPT 6.2 Sol Max (Codex) 单轮直接输出视频（20分18秒）。因此视频对比中的生成耗时与 Token 数据没有直接对照参考性。",
+        "html": "ℹ 网页来源说明：Gemini 4 Hydrogen 的交互网页为首轮直出（10分35秒 · 3.13M tokens）；ChatGPT 6.2 Sol Max (Codex) 的三维观察台是在完成短片后基于其船体与着色器程序衍生生成的网页版（本地构建跨度约 15分15秒）。"
+      },
+      "categoryNotesEn": {
+        "video": "⚠ Timing Disclaimer: Gemini 4 Hydrogen first built an interactive HTML scene (10m 35s) and only rendered the MP4 video after a second user prompt (7m 55s; 18m 30s combined), whereas ChatGPT 6.2 Sol Max (Codex) produced the video in one run (20m 18s).",
+        "html": "ℹ Web Origin Note: Gemini 4 Hydrogen produced this interactive HTML in its initial run (10m 35s, 3.13M tokens); ChatGPT 6.2 Sol Max (Codex) built viewer/dist afterwards from its short-film shader & ship code (~15m 15s local build span)."
+      },
       "models": [
         {
           "id": "gargantua-gemini-4-hydrogen",
+          "type": "video",
           "name": "Gemini 4 Hydrogen",
           "shortName": "Gemini 4",
           "vendor": "Google DeepMind (XHigh)",
-          "badge": "A",
           "accent": "#FF3B1D",
           "title": "INTERSTELLAR // GARGANTUA — ENDURANCE FLYBY",
           "tagline": "38 秒 5 幕宽银幕特效短片 · 154 步测地线光追与管风琴立体声配乐",
@@ -34,31 +41,22 @@
             "costShort": "未公开定价"
           },
           "specs": {
-            "generationTime": "⚠ 耗时无对比参考性 —— 首轮误先做成交互 HTML（10分35秒），二次追问要求后才渲染视频（7分55秒）；两阶段合计 18分30秒",
+            "generationTime": "⚠ 耗时无对比参考性 —— 首轮误先做成交互 HTML（10分35秒），二次追问后才渲染视频（7分55秒）；两阶段合计 18分30秒",
             "tokenUsage": "⚠ 非单轮可比 —— 视频阶段 3,641,840 tokens；含首轮 HTML 两阶段共 6,774,082 tokens（in 322K + cache 6.30M + out 148K）",
             "cost": "未公开标价（IDE 预览版内置调用，无公开按量单价）",
             "duration": "38.00s (2,280 frames)",
             "resolution": "1920 × 1080 @ 60fps (2.39:1 画幅)",
             "fileSize": "21.79 MiB Web (89.36 MiB Archival Master)",
             "renderEngine": "WebGL2 (2048² Shadow + 4x MSAA + 154步测地线光追 + 多级 Bloom & 拉丝耀斑)",
-            "audioEngine": "Python 48 kHz 立体声合成（大教堂管风琴、时间膨胀脉冲、推进轰鸣、卷积混响）",
-            "pipeline": "film.html + build_audio.py + 4路 Chrome Headless CDP → FFmpeg H.264/AAC",
-            "visualStyle": "12 舱段镂空桁架细节 · Ranger-1/2 双飞 · 穿过环心构图 & 近星点 12.1 R_s 冲刺"
-          },
-          "chapters": [
-            { "time": 0.000, "title": "ACT I · 深空降临", "desc": "卡冈图雅远景推进，永恒号切入吸积盘金白光晕" },
-            { "time": 6.500, "title": "ACT II · 黑洞边缘滑翔", "desc": "12 舱段镂空桁架 + Ranger-2 伴飞掠过 16.2 R_s 光环边缘" },
-            { "time": 14.000, "title": "ACT III · 穿过环心", "desc": "镜头沿自转轴穿过母船环心，黑洞爱因斯坦环穿框居中" },
-            { "time": 21.500, "title": "ACT IV · 近星点弹弓冲刺", "desc": "下潜至 12.1 R_s 加速掠过，离子尾焰与管风琴全音栓高潮" },
-            { "time": 29.000, "title": "ACT V · 枢纽特写与离去", "desc": "近距掠过中央对接枢纽与逆光剪影，缓缓拉远渐黑收尾" }
-          ]
+            "audioEngine": "Python 48 kHz 立体声合成（大教堂管风琴、时间膨胀脉冲、推进轰鸣、卷积混响）"
+          }
         },
         {
           "id": "gargantua-codex",
+          "type": "video",
           "name": "ChatGPT 6.2 Sol Max",
           "shortName": "6.2 Sol Max",
           "vendor": "OpenAI (Codex 灰测 / Gray-box)",
-          "badge": "B",
           "accent": "#2855FF",
           "title": "《永恒号掠过卡冈图雅》",
           "tagline": "18 秒 2.37:1 超宽银幕 OpenGL 3.3 Schwarzschild 光追 + 运动模糊短片",
@@ -78,15 +76,62 @@
             "resolution": "2560 × 1080 @ 24fps (原生超宽)",
             "fileSize": "13.96 MiB Web (22.59 MiB Master)",
             "renderEngine": "Python + ModernGL OpenGL 3.3+ (space.glsl Schwarzschild 反向追迹 + exhaust/grade 着色器)",
-            "audioEngine": "原创立体声合成配乐 (score.py → 48 kHz Stereo AAC 296 kbps)",
-            "pipeline": "Python HDR Offscreen Render (reel.py / ship.py) → FFmpeg H.264/AAC",
-            "visualStyle": "12 舱段蓝光推进器细节 · 电影感运动模糊累积 · 柔和金白吸积盘光弧"
+            "audioEngine": "原创立体声合成配乐 (score.py → 48 kHz Stereo AAC 296 kbps)"
+          }
+        },
+        {
+          "id": "gargantua-gemini-html",
+          "type": "html",
+          "name": "Gemini 4 Hydrogen",
+          "shortName": "Gemini 4",
+          "vendor": "Google DeepMind (XHigh)",
+          "accent": "#FF3B1D",
+          "title": "INTERSTELLAR // 实时 WebGL2 交互场景",
+          "tagline": "零依赖单文件 111 KiB · 实时测地线黑洞 + 12 舱段永恒号 + Ranger-1/2 + [H] 键盘调参面板",
+          "taglineEn": "Zero-dependency single HTML (111 KiB) · Real-time geodesic black hole + Endurance + Ranger-1/2 + [H] HUD",
+          "url": "pages/gargantua-gemini/index.html",
+          "poster": "posters/gargantua-gemini-html.jpg",
+          "metrics": {
+            "timeShort": "10分35秒 (首轮)",
+            "tokensShort": "3.13M tok (净 331K)",
+            "costShort": "未公开定价"
           },
-          "chapters": [
-            { "time": 0.000, "title": "01 · ESTABLISHING FLYBY", "desc": "从侧远景接近，建立卡冈图雅黑洞与永恒号尺度对比" },
-            { "time": 5.750, "title": "02 · CLOSE ESCORT", "desc": "切入伴飞近景，十二舱段在蓝色推进器光芒中缓慢自转" },
-            { "time": 11.750, "title": "03 · LENSED ARCS", "desc": "镜头拉远，露出被引力透镜弯折的上下两道金色光弧" }
-          ]
+          "specs": {
+            "generationTime": "10分35秒（19:29:18 – 19:39:53，26 轮推理首轮完成）",
+            "tokenUsage": "输入 232,342 + 缓存命中 2,801,485 + 输出 98,415（累计 3,132,242 tokens）",
+            "cost": "未公开标价（IDE 预览版内置调用，无公开按量单价）",
+            "duration": "实时交互 · 自由视角旋转缩放",
+            "resolution": "自适应视口 (单文件 111.2 KiB)",
+            "renderEngine": "WebGL2 (Velocity Verlet Kerr/Schwarzschild 测地线光追 + 1024² Shadow)",
+            "audioEngine": "纯视觉实时渲染（视频版另配立体声合成音轨）"
+          }
+        },
+        {
+          "id": "gargantua-codex-html",
+          "type": "html",
+          "name": "ChatGPT 6.2 Sol Max",
+          "shortName": "6.2 Sol Max",
+          "vendor": "OpenAI (Codex 灰测 / Gray-box)",
+          "accent": "#2855FF",
+          "title": "《永恒号与卡冈图雅》实时三维观察台",
+          "tagline": "3 组预设相机视角（伴飞 / 永恒号 / 卡冈图雅）· 画质档位切换 · 暂停/重置与沉浸全屏",
+          "taglineEn": "3 camera presets (Flyby / Endurance / Gargantua) · Quality switcher · Motion & fullscreen controls",
+          "url": "pages/gargantua-codex/index.html",
+          "poster": "pages/gargantua-codex/assets/poster.webp",
+          "metrics": {
+            "timeShort": "约 15分15秒* (衍生构建)",
+            "tokensShort": "未导出日志",
+            "costShort": "订阅额度"
+          },
+          "specs": {
+            "generationTime": "本地工程构建跨度约 15分15秒*（20:03:03 – 20:18:18，由短片源码衍生打包）",
+            "tokenUsage": "未导出（灰测未记录具体 Token 数量）",
+            "cost": "ChatGPT 订阅额度内执行",
+            "duration": "实时交互 · 3 预设视角 + 自由拖拽缩放",
+            "resolution": "自适应视口 (静态包 4.13 MiB / 10 文件)",
+            "renderEngine": "WebGL 2 (renderer.js + scene-data.js + 吸积盘/飞船预设切换器)",
+            "audioEngine": "纯视觉实时观察台（视频版另配立体声配乐）"
+          }
         }
       ]
     },
@@ -94,21 +139,20 @@
       "id": "showreel-2026",
       "tabTitle": "01 · 动作设计师 15s 卷宗",
       "tabTitleEn": "01 · 15s Motion Showreel",
-      "badge": "",
+      "badge": "视频",
+      "badgeEn": "Video",
       "title": "Motion Designer 15s Showreel Benchmark",
       "prompt": "制作一段动态的15秒动作图形视频，展示你作为一个令人惊叹的动作设计师的才华，就像这是你简历的展示卷宗一样，全力以赴。",
       "promptEn": "Create a dynamic 15-second motion graphics video showcasing your talent as an astonishing motion designer, as if it were your portfolio showreel — go all out.",
       "benchmarkSpecs": "15.00s · 1920×1080 · 60fps · 48kHz Stereo AAC",
       "benchmarkSpecsEn": "15.00s · 1920×1080 · 60fps · 48kHz Stereo AAC",
-      "defaultDuration": 15.0,
-      "fps": 60,
       "models": [
         {
           "id": "gemini-4-hydrogen",
+          "type": "video",
           "name": "Gemini 4 Hydrogen",
           "shortName": "Gemini 4",
           "vendor": "Google DeepMind",
-          "badge": "A",
           "accent": "#FF3B1D",
           "title": "REEL // 26 — MOTION DESIGNER SHOWREEL",
           "tagline": "128 BPM 节拍锁定的 8 小节全代码实时音画作品集",
@@ -128,27 +172,15 @@
             "resolution": "1920 × 1080 @ 60fps",
             "fileSize": "10.88 MiB Web (88.38 MiB Archival Master)",
             "renderEngine": "WebGL2 (GLSL ES 3.00 Raymarched SDF + 5,200 GPU Particles) + Canvas2D",
-            "audioEngine": "48 kHz Stereo Synthesized EDM / Foley Master (128 BPM F Minor)",
-            "pipeline": "Single HTML5 Runtime → Headless Chrome CDP → FFmpeg H.264/AAC",
-            "visualStyle": "Swiss Brutalism · Iridescent SDF Gyroscope · 64-Cell Matrix · Hypercut"
-          },
-          "chapters": [
-            { "time": 0.000, "title": "00 · REEL // 26", "desc": "开场脉冲光圈与动态简历主标" },
-            { "time": 1.875, "title": "01 · PROCEDURAL SCULPT", "desc": "三维 SDF 融合雕塑与全息色散环" },
-            { "time": 3.750, "title": "02 · 64-CELL MATRIX", "desc": "8×8 等距三维阵列与节拍波浪力学" },
-            { "time": 5.625, "title": "03 · SWISS GRID", "desc": "瑞士网格动力学排版与贝塞尔张力" },
-            { "time": 7.500, "title": "04 · FRAME BY FRAME", "desc": "双色切屏与贝塞尔蓄力曲线引爆" },
-            { "time": 9.375, "title": "05 · FLUID INTERACTION", "desc": "UI 设计系统卡片 Drop 与 5,200 GPU 粒子力场" },
-            { "time": 11.250, "title": "06 · HYPERCUT", "desc": "7 段极速蒙太奇闪切与高反差字效" },
-            { "time": 13.125, "title": "07 · MOTION DESIGNER", "desc": "简历履历信息矩阵与终极黑曜石锁版" }
-          ]
+            "audioEngine": "48 kHz Stereo Synthesized EDM / Foley Master (128 BPM F Minor)"
+          }
         },
         {
           "id": "chatgpt-62-sol-max",
+          "type": "video",
           "name": "ChatGPT 6.2 Sol Max",
           "shortName": "6.2 Sol Max",
           "vendor": "OpenAI (灰测 / Gray-box)",
-          "badge": "B",
           "accent": "#2855FF",
           "title": "AFTERFORM — FORM IS A FORCE",
           "tagline": "Python + OpenGL 3.3+ 程序化曲面与算法配乐",
@@ -168,18 +200,8 @@
             "resolution": "1920 × 1080 @ 60fps",
             "fileSize": "12.47 MiB Web (16.83 MiB Master)",
             "renderEngine": "Python 3.11+ & Modern OpenGL 3.3+ (field.glsl, ribbon shaders)",
-            "audioEngine": "Algorithmic Procedural Score (score.py → 48kHz Stereo AAC)",
-            "pipeline": "Python OpenGL Offscreen Render (reel.py) → FFmpeg H.264/AAC",
-            "visualStyle": "Obsidian Ground · Brutalist Cream Type · Metallic Twisted Ribbon"
-          },
-          "chapters": [
-            { "time": 0.000, "title": "01 · FORM IS A FORCE", "desc": "纸面干涉纹 / Paper Interference" },
-            { "time": 2.344, "title": "02 · PRESSURE", "desc": "折叠的金属带 / Folded Metallic Ribbon" },
-            { "time": 5.156, "title": "03 · SHEAR", "desc": "五片错位文字 / 5-Slice Sheared Typography" },
-            { "time": 7.969, "title": "04 · RELEASE", "desc": "同一形体的三态 / Three States of Form" },
-            { "time": 10.781, "title": "05 · INDEX", "desc": "图形、体积、标志 / Graphics · Volume · Mark" },
-            { "time": 12.656, "title": "06 · AFTERFORM", "desc": "片尾主视觉锁版 / Endcard Lockup" }
-          ]
+            "audioEngine": "Algorithmic Procedural Score (score.py → 48kHz Stereo AAC)"
+          }
         }
       ]
     }

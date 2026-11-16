@@ -52,6 +52,10 @@
       </div>
 
       <blockquote id="promptText" class="prompt-quote"></blockquote>
+
+      <!-- Sub-Category Filter Pills (shown when benchmark has 2+ deliverable types, e.g. Video vs HTML vs SVG) -->
+      <div id="categoryBar" class="category-bar" hidden></div>
+
       <div id="promptFairnessNote" class="fairness-note" hidden></div>
 
       <!-- Compact Sync Action Bar (Only shown when 2+ video models exist) -->
@@ -69,6 +73,21 @@
         </div>
         <div class="toolbar-right">
           <span class="toolbar-hint" data-i18n="videoTip">提示：每个视频均可独立点击播放；“同时播放”不再强制跳帧，保证双路流畅不卡顿</span>
+        </div>
+      </div>
+
+      <!-- Compact HTML Action Bar (Shown when visible slice has 1+ HTML pages) -->
+      <div id="htmlToolbar" class="video-toolbar" hidden>
+        <div class="toolbar-left">
+          <button id="launchAllHtmlBtn" class="btn btn-volt btn-sm" type="button">
+            ▶ <span data-i18n="launchAllHtml">同时启动全部网页</span>
+          </button>
+          <button id="sleepAllHtmlBtn" class="btn btn-ghost btn-sm" type="button">
+            ⏹ <span data-i18n="sleepAllHtml">全部休眠释放显卡</span>
+          </button>
+        </div>
+        <div class="toolbar-right">
+          <span class="toolbar-hint" data-i18n="htmlTip">提示：交互场景均为实时 WebGL2 渲染，可单开满帧体验，或点击「同时启动」并排操作</span>
         </div>
       </div>
     </section>
