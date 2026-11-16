@@ -4,19 +4,19 @@
   const I18N = {
     zh: {
       brandSub: '同提示词 · 多模型表现对比（视频 / 交互网页 / SVG）',
+      lightMode: '浅色模式',
+      darkMode: '深色模式',
       addModelBtn: '本地预览对比',
-      sharedPromptBadge: 'SHARED PROMPT · 同一提示词',
+      sharedPromptBadge: '同一提示词',
       copyPrompt: '复制提示词',
       copied: '已复制 ✓',
       playAll: '同时播放全部',
       pauseAll: '全部暂停',
       resetAll: '全部归零',
-      videoTip: '提示：每个视频均可独立点击播放；“同时播放”不强制跳帧，保证双路流畅不卡顿',
-      launchAllHtml: '同时启动全部网页',
-      sleepAllHtml: '全部休眠释放显卡',
-      htmlTip: '提示：交互场景均为实时 WebGL2 渲染，可单开满帧体验，或点击「同时启动」并排操作',
+      launchAllHtml: '同时启动',
+      sleepAllHtml: '全部休眠',
       launchOneHtml: '▶ 启动实时交互网页',
-      launchOneSub: '点击加载 WebGL2 场景 · 支持鼠标拖拽旋转与缩放',
+      launchOneSub: '拖拽旋转 · 滚轮缩放',
       sleepOneHtml: '⏹ 休眠',
       soloAudio: '仅听此路',
       reloadHtml: '↻ 重载',
@@ -43,10 +43,10 @@
       metricCostLabel: '花费',
       worksUnit: '作品',
       catNames: {
-        video: '🎬 视频成片对比',
-        html: '🌐 交互式 3D 网页对比',
-        svg: '✦ SVG 矢量图形对比',
-        all: '📋 全部形式'
+        video: '视频',
+        html: '3D 网页',
+        svg: 'SVG',
+        all: '全部形式'
       },
       typeLabels: {
         video: '视频',
@@ -66,6 +66,8 @@
     },
     en: {
       brandSub: 'Same-Prompt Multi-Model Benchmark (Video / HTML / SVG)',
+      lightMode: 'Light mode',
+      darkMode: 'Dark mode',
       addModelBtn: 'Preview Local Output',
       sharedPromptBadge: 'SHARED PROMPT',
       copyPrompt: 'Copy Prompt',
@@ -73,12 +75,10 @@
       playAll: 'Play All Videos',
       pauseAll: 'Pause All',
       resetAll: 'Reset All',
-      videoTip: 'Tip: Play each video independently; "Play All" avoids forced mid-stream seeks for stutter-free decoding',
-      launchAllHtml: 'Launch All Web Scenes',
-      sleepAllHtml: 'Unload All (Free GPU)',
-      htmlTip: 'Tip: Interactive scenes run heavy real-time WebGL2 shaders; launch one at a time for peak FPS or both together',
+      launchAllHtml: 'Launch All',
+      sleepAllHtml: 'Unload All',
       launchOneHtml: '▶ Launch Interactive 3D Scene',
-      launchOneSub: 'Click to boot WebGL2 · Drag to orbit, scroll to zoom',
+      launchOneSub: 'Drag to orbit · Scroll to zoom',
       sleepOneHtml: '⏹ Sleep',
       soloAudio: 'Solo Audio',
       reloadHtml: '↻ Reload',
@@ -105,10 +105,10 @@
       metricCostLabel: 'Cost',
       worksUnit: 'items',
       catNames: {
-        video: '🎬 Video Cuts',
-        html: '🌐 Interactive WebGL Pages',
-        svg: '✦ Vector SVG',
-        all: '📋 All Formats'
+        video: 'Video',
+        html: '3D Web',
+        svg: 'SVG',
+        all: 'All Formats'
       },
       typeLabels: {
         video: 'Video',
@@ -143,6 +143,25 @@
   };
 
   const $ = (id) => document.getElementById(id);
+  const themeToggle = $('themeToggleBtn');
+
+  function updateThemeToggle() {
+    if (!themeToggle) return;
+    const isLight = document.documentElement.dataset.theme === 'light';
+    const label = I18N[state.lang][isLight ? 'darkMode' : 'lightMode'];
+    $('themeToggleLabel').textContent = label;
+    themeToggle.title = label;
+  }
+
+  function toggleTheme() {
+    const root = document.documentElement;
+    const theme = root.dataset.theme === 'light' ? 'dark' : 'light';
+    root.dataset.theme = theme;
+    try {
+      localStorage.setItem('prompt-arena-theme', theme);
+    } catch (_) {}
+    updateThemeToggle();
+  }
 
   function escapeHtml(str) {
     return String(str ?? '')
@@ -286,7 +305,7 @@
       const badgeText = state.lang === 'zh' ? b.badge : b.badgeEn || b.badge;
       const badgeHtml = badgeText ? `<span class="bench-badge">${escapeHtml(badgeText)}</span>` : '';
       const countText = `${(b.models || []).length} ${dict.worksUnit}`;
-      btn.innerHTML = `${badgeHtml}<span>${escapeHtml(title)}</span><span class="bench-count">(${escapeHtml(countText)})</span>`;
+      btn.innerHTML = `${badgeHtml}<span class="bench-title">${escapeHtml(title)}</span><span class="bench-count">(${escapeHtml(countText)})</span>`;
       btn.addEventListener('click', () => switchBenchmark(b.id, null, true));
       nav.appendChild(btn);
     });
@@ -302,7 +321,6 @@
     }
 
     const dict = I18N[state.lang];
-    const newCats = new Set((state.arena && state.arena.newCategories) || []);
     bar.hidden = false;
     bar.innerHTML = '';
 
@@ -311,8 +329,7 @@
       btn.type = 'button';
       btn.className = 'cat-pill' + (cat.key === state.activeCategory ? ' active' : '');
       const label = dict.catNames[cat.key] || cat.key;
-      const tagHtml = newCats.has(cat.key) ? `<span class="cat-tag">NEW</span>` : '';
-      btn.innerHTML = `${tagHtml}<span>${escapeHtml(label)}</span><span>(${cat.count})</span>`;
+      btn.innerHTML = `<span>${escapeHtml(label)}</span><span>(${cat.count})</span>`;
       btn.addEventListener('click', () => switchCategory(cat.key, true));
       bar.appendChild(btn);
     });
@@ -545,6 +562,7 @@
 
   function applyI18n() {
     const dict = I18N[state.lang];
+    updateThemeToggle();
     document.querySelectorAll('[data-i18n]').forEach((el) => {
       const key = el.dataset.i18n;
       if (dict[key]) el.textContent = dict[key];
@@ -813,9 +831,11 @@
       bindEvents();
       switchBenchmark(initialId, hashCat || null, false);
     } catch (err) {
-      document.body.innerHTML = `<div style="padding:40px;font-family:sans-serif;color:#f3efe6">Failed to load models.json: ${escapeHtml(err.message)}</div>`;
+      document.body.innerHTML = `<div style="padding:40px">Failed to load models.json: ${escapeHtml(err.message)}</div>`;
     }
   }
 
+  themeToggle?.addEventListener('click', toggleTheme);
+  updateThemeToggle();
   init();
 })();

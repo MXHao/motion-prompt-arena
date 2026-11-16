@@ -3,8 +3,8 @@
   "benchmarks": [
     {
       "id": "gargantua-flyby",
-      "tabTitle": "02 · 星际穿越 · 黑洞掠过",
-      "tabTitleEn": "02 · Interstellar · Gargantua",
+      "tabTitle": "星际穿越 · 黑洞掠过",
+      "tabTitleEn": "Interstellar · Gargantua",
       "badge": "视频+网页",
       "badgeEn": "Video+Web",
       "title": "Interstellar · Gargantua Endurance Flyby",
@@ -137,8 +137,8 @@
     },
     {
       "id": "showreel-2026",
-      "tabTitle": "01 · 动作设计师 15s 卷宗",
-      "tabTitleEn": "01 · 15s Motion Showreel",
+      "tabTitle": "动作设计师 15s 卷宗",
+      "tabTitleEn": "15s Motion Showreel",
       "badge": "视频",
       "badgeEn": "Video",
       "title": "Motion Designer 15s Showreel Benchmark",
