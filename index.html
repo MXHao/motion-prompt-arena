@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prompt Arena — 同提示词多模型效果对比（视频 · 网页 · SVG）</title>
+  <meta name="description" content="同一提示词下不同大模型产出的视频、交互网页与 SVG 作品并排对比展示站。" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23090B10'/><rect x='5' y='6' width='9' height='20' rx='2' fill='%23FF3B1D'/><rect x='18' y='6' width='9' height='20' rx='2' fill='%232855FF'/></svg>" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <i class="mark-a"></i>
+          <i class="mark-b"></i>
+        </span>
+        <div class="brand-text">
+          <span class="brand-title">PROMPT ARENA</span>
+          <span class="brand-sub" data-i18n="brandSub">同提示词 · 多模型表现对比（视频 / 交互网页 / SVG）</span>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button id="langToggleBtn" class="btn btn-ghost btn-sm" type="button">EN / 中文</button>
+        <button id="openAddModalBtn" class="btn btn-primary btn-sm" type="button">
+          <span>+</span>
+          <span data-i18n="addModelBtn">本地预览对比</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container main-wrap">
+    <!-- Prompt / Benchmark Switcher -->
+    <nav id="benchmarkNav" class="benchmark-bar" aria-label="Prompt Benchmarks"></nav>
+
+    <!-- Prompt Header Card -->
+    <section class="prompt-card" aria-label="Shared Prompt">
+      <div class="prompt-top">
+        <div class="prompt-label-row">
+          <span class="pill pill-accent" data-i18n="sharedPromptBadge">SHARED PROMPT · 同一提示词</span>
+          <span class="spec-tags" id="benchmarkTags"></span>
+          <a id="benchmarkRefLink" class="ref-link" href="#" target="_blank" rel="noopener noreferrer" hidden></a>
+        </div>
+        <button id="copyPromptBtn" class="btn btn-ghost btn-sm" type="button" data-i18n="copyPrompt">
+          复制提示词
+        </button>
+      </div>
+
+      <blockquote id="promptText" class="prompt-quote"></blockquote>
+      <div id="promptFairnessNote" class="fairness-note" hidden></div>
+
+      <!-- Compact Sync Action Bar (Only shown when 2+ video models exist) -->
+      <div id="videoToolbar" class="video-toolbar" hidden>
+        <div class="toolbar-left">
+          <button id="playAllBtn" class="btn btn-volt btn-sm" type="button">
+            ▶ <span data-i18n="playAll">同时播放全部</span>
+          </button>
+          <button id="pauseAllBtn" class="btn btn-ghost btn-sm" type="button">
+            ⏸ <span data-i18n="pauseAll">全部暂停</span>
+          </button>
+          <button id="resetAllBtn" class="btn btn-ghost btn-sm" type="button">
+            ⏮ <span data-i18n="resetAll">全部归零</span>
+          </button>
+        </div>
+        <div class="toolbar-right">
+          <span class="toolbar-hint" data-i18n="videoTip">提示：每个视频均可独立点击播放；“同时播放”不再强制跳帧，保证双路流畅不卡顿</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Multi-Modal Comparison Grid (Video / HTML / SVG) -->
+    <section id="comparisonGrid" class="comparison-grid" aria-label="Model Outputs Comparison"></section>
+
+    <!-- Concise Spec Comparison Matrix -->
+    <section class="section-block" aria-label="Technical Specs Matrix">
+      <div class="section-head">
+        <h2 data-i18n="specsTitle">核心参数与成本对照</h2>
+      </div>
+      <div class="table-scroll">
+        <table class="spec-table" id="specTable"></table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span><strong>PROMPT ARENA</strong> · <span data-i18n="footerNote">支持视频（MP4/WebM）、交互网页（HTML）与矢量图形（SVG）多模态同台对比</span></span>
+    </div>
+  </footer>
+
+  <!-- Add Local Model Preview / JSON Generator Modal -->
+  <div id="addModal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="addModalTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="addModalTitle" data-i18n="modalTitle">添加本地作品进行同台对比</h3>
+        <button id="closeAddModalBtn" class="btn btn-ghost btn-sm" type="button" aria-label="Close">✕</button>
+      </div>
+      <form id="addModelForm" class="modal-body">
+        <p class="modal-tip" data-i18n="modalTip">
+          支持选择本地 MP4 / WebM 视频、HTML 网页或 SVG 矢量文件，仅在当前浏览器内存中临时加载对比，不会上传服务器；也可导出 JSON 片段写入 <code>models.json</code> 永久发布。
+        </p>
+
+        <div id="dropZone" class="drop-zone">
+          <input id="localMediaFile" type="file" accept="video/mp4,video/webm,video/quicktime,.html,.htm,.svg" />
+          <div class="drop-zone-text">
+            <strong data-i18n="dropTitle">点击选择或拖拽文件到此处</strong>
+            <span id="selectedFileName" class="drop-sub">支持 .mp4 / .webm / .html / .svg（视频建议 &lt; 25 MB）</span>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <label class="field">
+            <span data-i18n="fieldName">模型名称 *</span>
+            <input id="inputModelName" type="text" placeholder="例如：Claude 4.5 / Sora 2 / Gemini 4" required />
+          </label>
+          <label class="field">
+            <span data-i18n="fieldVendor">研发方 / 版本备注</span>
+            <input id="inputModelVendor" type="text" placeholder="例如：Anthropic / OpenAI" />
+          </label>
+          <label class="field">
+            <span data-i18n="fieldTitle">作品标题</span>
+            <input id="inputWorkTitle" type="text" placeholder="例如：Gargantua Scene V2" />
+          </label>
+          <label class="field">
+            <span data-i18n="fieldEngine">渲染引擎 / 技术栈</span>
+            <input id="inputRenderEngine" type="text" placeholder="例如：Three.js / OpenGL / SVG" />
+          </label>
+          <label class="field">
+            <span data-i18n="fieldGenTime">生成耗时</span>
+            <input id="inputGenTime" type="text" placeholder="例如：12分30秒" />
+          </label>
+          <label class="field">
+            <span data-i18n="fieldTokens">Token 消耗</span>
+            <input id="inputTokens" type="text" placeholder="例如：输入 120K + 输出 45K" />
+          </label>
+          <label class="field">
+            <span data-i18n="fieldCost">花费 / 计费</span>
+            <input id="inputCost" type="text" placeholder="例如：$0.85 或 订阅额度" />
+          </label>
+        </div>
+
+        <div class="modal-actions">
+          <button id="generateJsonBtn" class="btn btn-ghost" type="button" data-i18n="genJsonBtn">
+            生成 models.json 配置
+          </button>
+          <button class="btn btn-primary" type="submit" data-i18n="loadNowBtn">
+            加入当前对比网格
+          </button>
+        </div>
+
+        <div id="jsonOutputWrap" class="json-export" hidden>
+          <div class="json-export-head">
+            <span data-i18n="jsonGuide">将文件放入 <code>dist/</code> 对应目录后，把下方对象追加到 <code>dist/models.json</code>：</span>
+            <button id="copyJsonBtn" class="btn btn-ghost btn-sm" type="button" data-i18n="copy">复制</button>
+          </div>
+          <pre id="jsonOutputPre"></pre>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
