@@ -1,0 +1,4 @@
+.edgeone/
+*.zip
+Thumbs.db
+.DS_Store
